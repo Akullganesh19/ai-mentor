@@ -1,0 +1,6 @@
+## 2026-08-26 — Architect: Provided Reusable Highlight Component
+**Structural problem:** The `src/mdx/custom-components.tsx` file provided a commented-out implementation pattern for a `Highlight` component, forcing users to manually copy-paste the component into the file if they wanted to use it. This creates friction and potential for inconsistent implementations across projects cloned from this starter.
+**Refactor:** Extracted the example implementation of `Highlight` and exported it as a real, usable component within `customComponents`.
+**Behavior preserved by:** The base file was an empty export wrapper, so no existing MDX rendering behavior was altered. Tests passing confirms the component export is valid.
+**Future work unblocked:** Future documentation authors can immediately use the `<Highlight>` component in their `.mdx` content without having to write React code first.
+**Next opportunity:** Consolidate any inline `<mark>` or stylized `<span>` elements currently used in `.mdx` files to use the new `<Highlight>` component.

@@ -18,39 +18,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Only HTTP(S) requests are allowed' }, { status: 400 })
   }
 
-  let parsedUrl: URL
-  try {
-    parsedUrl = new URL(payload.url)
-  } catch {
-    return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
-  }
-
-  // Basic SSRF protection (hostname and explicit loopback/private IPs)
-  const hostname = parsedUrl.hostname.toLowerCase()
-  const isLocalhost = hostname === 'localhost' || hostname.endsWith('.localhost')
-
-  // Basic IPv4 private/loopback check
-  const isIPv4Internal = /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-    /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-    hostname === '169.254.169.254' ||
-    hostname === '0.0.0.0'
-
-  // Basic IPv6 loopback/private check
-  const isIPv6Internal = hostname === '[::1]' ||
-    hostname.startsWith('[fd') ||
-    hostname.startsWith('[fc') ||
-    hostname.startsWith('[fe8') ||
-    hostname.startsWith('[fe9') ||
-    hostname.startsWith('[fea') ||
-    hostname.startsWith('[feb') ||
-    hostname === '[::]'
-
-  if (isLocalhost || isIPv4Internal || isIPv6Internal) {
-    return NextResponse.json({ error: 'Requests to internal addresses are not allowed' }, { status: 400 })
-  }
-
   const method = payload.method.toUpperCase()
   const headers = Object.entries(payload.headers ?? {}).reduce<Record<string, string>>((acc, [key, value]) => {
     if (!value || BLOCKED_HEADERS.has(key.toLowerCase())) {
