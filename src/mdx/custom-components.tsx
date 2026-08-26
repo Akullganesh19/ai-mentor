@@ -1,4 +1,11 @@
+import type { ReactNode } from 'react'
 import type { MDXComponents } from 'mdx/types'
+
+function Highlight({ children }: { children: ReactNode }) {
+  return (
+    <mark className="rounded bg-accent/15 px-1 text-foreground">{children}</mark>
+  )
+}
 
 /**
  * ─────────────────────────────────────────────────────────────────────────────
@@ -31,6 +38,5 @@ import type { MDXComponents } from 'mdx/types'
  *  `src/components/mdx/rich-content.tsx` for how the built-ins are written.
  */
 export const customComponents: MDXComponents = {
-  // Add your components here, e.g.:
-  // Highlight,
+  Highlight,
 }
