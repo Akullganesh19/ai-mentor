@@ -41,6 +41,22 @@ export async function POST(request: NextRequest) {
     const textBody = await response.text()
     const duration = Date.now() - startedAt
 
+    if (duration > 5000) {
+      try {
+        const safeUrl = new URL(payload.url)
+        safeUrl.search = '' // Strip query parameters to avoid leaking secrets
+        console.warn(JSON.stringify({
+          msg: 'try-it: High latency request',
+          method,
+          url: safeUrl.toString(),
+          duration_ms: duration,
+          status: response.status,
+        }))
+      } catch {
+        // Ignore URL parse errors for logging
+      }
+    }
+
     return NextResponse.json(
       {
         status: response.status,
@@ -52,6 +68,23 @@ export async function POST(request: NextRequest) {
       { status: 200 },
     )
   } catch (error) {
+    try {
+      const safeUrl = payload?.url ? new URL(payload.url) : null
+      if (safeUrl) safeUrl.search = '' // Strip query parameters
+      console.error(JSON.stringify({
+        msg: 'try-it: Proxy request failed',
+        method: payload?.method,
+        url: safeUrl?.toString() ?? payload?.url,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+      }))
+    } catch {
+      console.error(JSON.stringify({
+        msg: 'try-it: Proxy request failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }))
+    }
+
     const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json({ error: message }, { status: 500 })
   }
