@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
       visitorType: classification.visitorType,
       agentSignal: classification.agentSignal,
     })
-  } catch (error) {
-    console.error('search: failed to record analytics event', error)
+  } catch {
+    // never fail the search on an analytics hiccup
   }
 
   return Response.json(

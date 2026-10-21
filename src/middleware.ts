@@ -113,8 +113,7 @@ function isFromAdmin(request: NextRequest): boolean {
   try {
     const path = new URL(referer).pathname
     return path === '/admin' || path.startsWith('/admin/')
-  } catch (error) {
-    console.warn('middleware: failed to parse referer URL', error)
+  } catch {
     return false
   }
 }
@@ -202,8 +201,8 @@ async function sendAnalyticsEvent(request: NextRequest, pathname: string) {
       'x-thally-analytics-secret': secret,
     },
     body: JSON.stringify(payload),
-  }).catch((error) => {
-    console.error('middleware: failed to send analytics event', error)
+  }).catch(() => {
+    // analytics must never block requests
   })
 }
 

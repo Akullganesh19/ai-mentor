@@ -88,7 +88,6 @@ async function handleMessage(
         const text = await tool.handler(args)
         return rpcResult(id, { content: [{ type: 'text', text }] })
       } catch (err) {
-        console.error('mcp: tool execution failed', { name, err })
         return rpcResult(id, {
           content: [{ type: 'text', text: err instanceof Error ? err.message : String(err) }],
           isError: true,
@@ -110,8 +109,7 @@ export async function POST(request: NextRequest) {
   let body: JsonRpcMessage | Array<JsonRpcMessage>
   try {
     body = await request.json()
-  } catch (error) {
-    console.error('mcp: failed to parse JSON-RPC message', error)
+  } catch {
     return Response.json(rpcError(null, -32700, 'Parse error'), { status: 400 })
   }
 
@@ -130,8 +128,7 @@ export async function POST(request: NextRequest) {
         const id = Array.isArray(body) ? null : body?.id
         return Response.json(rpcError(id, -32000, 'Rate limit exceeded. Please slow down.'), { status: 429 })
       }
-    } catch (error) {
-      console.error('mcp: rate limit storage increment failed', error)
+    } catch {
       // storage hiccup must never block a request
     }
   }
