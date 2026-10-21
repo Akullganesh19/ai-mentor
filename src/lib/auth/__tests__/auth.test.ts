@@ -2,10 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // The roster is read from docs.json via getTeamConfig — mock it (no real config).
 vi.mock('@/data/docs', () => ({ getTeamConfig: vi.fn(() => ({ members: [], domains: [] })) }))
-vi.mock('@/lib/admin/settings', () => ({ getAdminSettings: vi.fn(() => Promise.resolve({ allowedDomains: [] })) }))
 
 import { getTeamConfig } from '@/data/docs'
-import { getAdminSettings } from '@/lib/admin/settings'
 import { resolveRoleFromRoster, isTeamConfigured } from '@/lib/auth/roster'
 import { resolveAdminSession, requireCapability } from '@/lib/auth/rbac'
 import { signSession } from '@/lib/auth/session'
@@ -62,23 +60,6 @@ describe('rbac — session → live role → capability', () => {
 
     // Simulate a committed change that removes Bob → the same cookie is now denied.
     vi.mocked(getTeamConfig).mockReturnValue({ members: [{ email: 'alice@acme.com', role: 'owner' }], domains: [] })
-    expect(await resolveAdminSession(token)).toBeNull()
-  })
-
-  it('includes domains from admin settings in live role resolution', async () => {
-    // Git roster has NO domains configured, just alice
-    vi.mocked(getTeamConfig).mockReturnValue({ members: [{ email: 'alice@acme.com', role: 'owner' }], domains: [] })
-    // Admin settings dynamically adds dynamic.com
-    vi.mocked(getAdminSettings).mockResolvedValue({ allowedDomains: [{ domain: 'dynamic.com', role: 'editor' }] } as Awaited<ReturnType<typeof getAdminSettings>>)
-
-    const token = (await signSession({ email: 'dave@dynamic.com' }))!
-
-    // dave gets 'editor' because of the dynamic domain setting
-    expect((await resolveAdminSession(token))?.role).toBe('editor')
-    expect(await requireCapability(token, 'manage_docs')).not.toBeNull()
-
-    // simulate removing dynamic.com from the admin settings
-    vi.mocked(getAdminSettings).mockResolvedValue({ allowedDomains: [] } as Awaited<ReturnType<typeof getAdminSettings>>)
     expect(await resolveAdminSession(token)).toBeNull()
   })
 })

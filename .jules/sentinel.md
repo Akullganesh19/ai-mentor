@@ -1,6 +1,6 @@
-## 2025-02-23 — Admin Authentication Model Missing Dynamic Role Resolution at OIDC Callback
-**Vulnerability class:** Privilege Escalation / AuthZ Gap (Denial of Service to authorized users)
-**Entry point:** `src/app/api/admin/auth/callback/route.ts`
-**Fix:** Replaced `resolveRoleFromRoster` (which strictly checked only the git-committed fallback roster) with `resolveRole` (which evaluates the dynamically managed allowed domains from the admin dashboard settings as well). This ensures that dynamically added users can sign in using OIDC without modifying the repository's source code.
-**Blast radius before fix:** An attacker added to the admin allowed domains via the admin dashboard (live DB settings) wouldn't be able to log in, but more importantly, if we wanted external or non-technical team members to have access *only* through allowed domains without modifying the codebase, they would be rejected during login because the OIDC callback strictly checks the git-committed roster instead of the live role resolution. This caused a denial of service/broken auth model for dynamically provisioned users.
-**Next opportunity:** Investigate `requireCapability` usage across admin endpoints to ensure we're not inadvertently exposing edge cases, or evaluate edge caching behaviors under OIDC sessions.
+## 2025-02-23 — Reverted runtime fix inside starter template
+**Vulnerability class:** N/A (Process Violation)
+**Entry point:** `src/app/api/admin/auth/callback/route.ts` and `src/lib/auth/__tests__/auth.test.ts`
+**Fix:** The CI failed because I applied a fix to files owned by the runtime (`src/app/**` and `src/lib/**`), which are generated snapshots from `thallylabs/thally`. Modifying them directly in `thallylabs/starter` causes the `starter-runtime-contract.mjs check` in CI to fail. I have reverted my changes.
+**Blast radius before fix:** Broken CI synchronization.
+**Next opportunity:** Wait for the fix to be authored in `thallylabs/thally` and automatically synchronized into this repository.
