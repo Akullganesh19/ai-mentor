@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { getOidcConfig, exchangeAndVerify } from '@/lib/auth/oidc'
 import { verifyShortLived, signSession, OIDC_FLOW_COOKIE } from '@/lib/auth/session'
 import { SESSION_COOKIE } from '@/lib/auth/session'
-import { resolveRoleFromRoster } from '@/lib/auth/roster'
+import { resolveRole } from '@/lib/auth/rbac'
 
 export const runtime = 'nodejs'
 
@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
     return login('oidc_verify_failed')
   }
 
-  // Only sign in identities that the git-committed roster grants a role.
-  const role = resolveRoleFromRoster(email)
+  // Only sign in identities that the git-committed roster or dynamic settings grant a role.
+  const role = await resolveRole(email)
   if (!role) return login('not_authorized')
 
   const session = await signSession({ email })
