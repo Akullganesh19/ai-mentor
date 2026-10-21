@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
   let body: { query?: unknown; resultCount?: unknown; clickedSlug?: unknown }
   try {
     body = await request.json()
-  } catch {
+  } catch (error) {
+    console.error('search-track: failed to parse request body', error)
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
   }
 
@@ -31,8 +32,8 @@ export async function POST(request: NextRequest) {
       visitorType: classification.visitorType,
       agentSignal: classification.agentSignal,
     })
-  } catch {
-    // analytics is best-effort — never fail the beacon
+  } catch (error) {
+    console.error('search-track: failed to record analytics event', error)
   }
 
   return NextResponse.json({ ok: true })

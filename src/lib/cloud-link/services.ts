@@ -88,7 +88,10 @@ export async function handleCloudAiChat(request: Request): Promise<Response> {
   const grant = await getCloudServiceGrant(siteUrl)
   if (!grant) return new Response('AI chat is not enabled for this site.', { status: 403 })
 
-  const body = await readBoundedJson(request).catch(() => null)
+  const body = await readBoundedJson(request).catch((error) => {
+    console.warn('cloud-link: failed to read bounded JSON for AI chat', error)
+    return null
+  })
   const messages = parseAiChatMessages(
     body && typeof body === 'object' && !Array.isArray(body)
       ? (body as { messages?: unknown }).messages
@@ -126,7 +129,8 @@ export async function handleCloudAiChat(request: Request): Promise<Response> {
       cache: 'no-store',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     })
-  } catch {
+  } catch (error) {
+    console.error('cloud-link: AI chat request failed', error)
     return new Response('Thally AI is temporarily unavailable.', { status: 503 })
   }
 
@@ -175,6 +179,12 @@ export async function recordCloudAnalyticsEvent(
     body: JSON.stringify(event),
     cache: 'no-store',
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  }).catch(() => null)
-  if (response?.body) await response.body.cancel().catch(() => undefined)
+  }).catch((error) => {
+    console.error('cloud-link: failed to record analytics event', error)
+    return null
+  })
+  if (response?.body) await response.body.cancel().catch((error) => {
+    console.error('cloud-link: failed to cancel analytics response body', error)
+    return undefined
+  })
 }
