@@ -194,5 +194,6 @@ export async function PUT(request: NextRequest) {
     )
   }
 
+  console.info(JSON.stringify({ event: 'admin_settings_updated', keys: Object.keys(patch), timestamp: new Date().toISOString() }))
   return NextResponse.json(await fullResponse(await updateAdminSettings(patch)))
 }
