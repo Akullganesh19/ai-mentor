@@ -88,7 +88,6 @@ async function handleMessage(
         const text = await tool.handler(args)
         return rpcResult(id, { content: [{ type: 'text', text }] })
       } catch (err) {
-        console.error(JSON.stringify({ event: 'mcp_tool_execution_failed', tool: name, error: err instanceof Error ? err.message : String(err), timestamp: new Date().toISOString() }))
         return rpcResult(id, {
           content: [{ type: 'text', text: err instanceof Error ? err.message : String(err) }],
           isError: true,
@@ -131,7 +130,6 @@ export async function POST(request: NextRequest) {
       }
     } catch {
       // storage hiccup must never block a request
-      console.warn(JSON.stringify({ event: 'mcp_rate_limit_storage_failure', ip, timestamp: new Date().toISOString() }))
     }
   }
 

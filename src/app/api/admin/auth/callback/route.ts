@@ -10,23 +10,14 @@ export const runtime = 'nodejs'
 export async function GET(request: NextRequest) {
   const config = getOidcConfig()
   const login = (err: string) => NextResponse.redirect(new URL(`/admin/login?error=${err}`, request.url))
-  if (!config) {
-    console.warn(JSON.stringify({ event: 'oidc_login_failed', reason: 'oidc_not_configured', timestamp: new Date().toISOString() }))
-    return login('oidc_not_configured')
-  }
+  if (!config) return login('oidc_not_configured')
 
   const code = request.nextUrl.searchParams.get('code')
   const state = request.nextUrl.searchParams.get('state')
-  if (!code || !state) {
-    console.warn(JSON.stringify({ event: 'oidc_login_failed', reason: 'oidc_error', timestamp: new Date().toISOString() }))
-    return login('oidc_error')
-  }
+  if (!code || !state) return login('oidc_error')
 
   const flow = await verifyShortLived(request.cookies.get(OIDC_FLOW_COOKIE)?.value)
-  if (!flow || flow.state !== state) {
-    console.warn(JSON.stringify({ event: 'oidc_login_failed', reason: 'state_mismatch', timestamp: new Date().toISOString() }))
-    return login('state_mismatch')
-  }
+  if (!flow || flow.state !== state) return login('state_mismatch')
 
   let email: string
   try {
@@ -39,24 +30,16 @@ export async function GET(request: NextRequest) {
     })
     email = result.email
   } catch {
-    console.warn(JSON.stringify({ event: 'oidc_login_failed', reason: 'oidc_verify_failed', timestamp: new Date().toISOString() }))
     return login('oidc_verify_failed')
   }
 
   // Only sign in identities that the git-committed roster grants a role.
   const role = resolveRoleFromRoster(email)
-  if (!role) {
-    console.warn(JSON.stringify({ event: 'oidc_login_failed', reason: 'not_authorized', domain: email.split('@')[1], timestamp: new Date().toISOString() }))
-    return login('not_authorized')
-  }
+  if (!role) return login('not_authorized')
 
   const session = await signSession({ email })
-  if (!session) {
-    console.warn(JSON.stringify({ event: 'oidc_login_failed', reason: 'no_secret', timestamp: new Date().toISOString() }))
-    return login('no_secret')
-  }
+  if (!session) return login('no_secret')
 
-  console.info(JSON.stringify({ event: 'oidc_login_success', domain: email.split('@')[1], timestamp: new Date().toISOString() }))
   const res = NextResponse.redirect(new URL('/admin', request.url))
   res.cookies.set(SESSION_COOKIE, session, {
     httpOnly: true,

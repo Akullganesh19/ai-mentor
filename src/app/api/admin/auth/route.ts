@@ -22,11 +22,9 @@ export async function POST(request: NextRequest) {
 
   const body = (await request.json()) as { password?: string }
   if (!body.password || !verifyAdminPassword(body.password)) {
-    console.warn(JSON.stringify({ event: 'admin_login_failed', reason: 'invalid_password', timestamp: new Date().toISOString() }))
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
   }
 
-  console.info(JSON.stringify({ event: 'admin_login_success', type: 'password', timestamp: new Date().toISOString() }))
   const token = createAdminSessionToken()
   const response = NextResponse.json({ ok: true })
   response.cookies.set(ADMIN_SESSION_COOKIE, token, {
